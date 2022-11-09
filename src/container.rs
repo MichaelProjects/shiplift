@@ -682,9 +682,13 @@ impl ContainerOptionsBuilder {
         srcport: u32,
         protocol: &str,
         hostport: u32,
+        host_ip_binding: Option<&str>
     ) -> &mut Self {
         let mut exposedport: HashMap<String, String> = HashMap::new();
         exposedport.insert("HostPort".to_string(), hostport.to_string());
+        if host_ip_binding.is_some(){
+            exposedport.insert("HostIp".to_string(), host_ip_binding.unwrap().to_string());
+        }
 
         // The idea here is to go thought the 'old' port binds and to apply them to the local
         // 'port_bindings' variable, add the bind we want and replace the 'old' value
@@ -1622,7 +1626,7 @@ mod tests {
     #[test]
     fn container_options_expose() {
         let options = ContainerOptionsBuilder::new("test_image")
-            .expose(80, "tcp", 8080)
+            .expose(80, "tcp", 8080, Some(&"127.0.0.1"))
             .build();
         assert_eq!(
             r#"{"ExposedPorts":{"80/tcp":{}},"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}]}},"Image":"test_image"}"#,
@@ -1630,8 +1634,8 @@ mod tests {
         );
         // try exposing two
         let options = ContainerOptionsBuilder::new("test_image")
-            .expose(80, "tcp", 8080)
-            .expose(81, "tcp", 8081)
+            .expose(80, "tcp", 8080, Some(&"127.0.0.1"))
+            .expose(81, "tcp", 8081, Some(&"127.0.0.1"))
             .build();
         assert_eq!(
             r#"{"ExposedPorts":{"80/tcp":{},"81/tcp":{}},"HostConfig":{"PortBindings":{"80/tcp":[{"HostPort":"8080"}],"81/tcp":[{"HostPort":"8081"}]}},"Image":"test_image"}"#,
